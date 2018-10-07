@@ -45,13 +45,13 @@ def show_user_profile(username):
     # show the user profile for that user
     try:
         result = Demo.query.all()
+        app.logger.info(result)
         print(result[0])
         print(str(result))
         sys.stdout.write(str(result))
         return 'User %s' % result
     except ValueError:
         return 'User %s' % ValueError
-    
 
 
 # string	（默認值）接受任何沒有斜杠的文本
