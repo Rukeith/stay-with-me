@@ -11,9 +11,9 @@
 
 ## TODO
 
-1. i18n error message
-2. send verify email
-3. Add stripe payment
+- [ ] i18n error message
+- [ ] send verify email
+- [ ] Add stripe payment
 
 
 ## Run
