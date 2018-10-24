@@ -56,4 +56,4 @@ class Classes(db.Model):
 class Book(db.Model):
     __tablename__ = 'book'
     book_id = db.Column(db.Integer, primary_key=True)
-    own_id = db.Colum(db.Integer,db.ForeignKey('user.id'))
+    own_id = db.Colum(db.Integer, db.ForeignKey('user.id'))
