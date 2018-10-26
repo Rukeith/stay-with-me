@@ -6,16 +6,31 @@ from sqlalchemy.dialects.mysql import ENUM, JSON
 
 arrangment_user = db.Table(
     'arrangment_user',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.user_id'), primary_key=True),
-    db.Column('arrangement_id', db.Integer, db.ForeignKey('arrangement.arrangement_id'), primary_key=True)
+    db.Column(
+        'user_id',
+        db.Integer,
+        db.ForeignKey('user.user_id'),
+        primary_key=True
+    ),
+    db.Column(
+        'arrangement_id',
+        db.Integer,
+        db.ForeignKey('arrangement.arrangement_id'),
+        primary_key=True
+    ),
+    extend_existing=True
 )
 
 
 class User(db.Model):
     __tablename__ = 'user'
+    __table_args__ = {
+        "useexisting": True
+    }
+
     user_id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(50), unique=True, nullable=False)
+    username = db.Column(db.String(50), unique=True, nullable=False)
 
     # one-to-one
     search_condition = db.relationship(
@@ -43,17 +58,11 @@ class User(db.Model):
         backref=db.backref('owner', lazy='joined')
     )
 
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
-    classes = db.relationship('Classes', backref='classes')
-
-    books = db.relationship('Book', backref='book')
-
-    def __init__(self, username, email):
-        self.username = username
-        self.email = email
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
 
     def __repr__(self):
-        return '<Demo %r>' % self.username
+        return '<User %r>' % self.username
 
     def save(self):
         db.session.add(self)
@@ -62,14 +71,16 @@ class User(db.Model):
 
 class SearchCondition(db.Model):
     __tablename__ = 'search_condition'
+    __table_args__ = {
+        "useexisting": True
+    }
+
     search_condition_id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     condition = db.Column(JSON, default=lambda: {})
 
-    def __init__(self, search_condition_id, user_id, condition):
-        self.search_condition_id = search_condition_id
-        self.user_id = user_id
-        self.condition = condition
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
 
     def __repr__(self):
         return '<SearchCondition %r>' % self.search_condition_id
@@ -81,11 +92,29 @@ class SearchCondition(db.Model):
 
 class Arrangement(db.Model):
     __tablename__ = 'arrangement'
+    __table_args__ = {
+        "useexisting": True
+    }
+
     arrangement_id = db.Column(db.Integer, primary_key=True)
+
+    def __init__(self, **kwargs):
+        super(Arrangement, self).__init__(**kwargs)
+
+    def __repr__(self):
+        return '<Arrangement %r>' % self.arrangement_id
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
 
 
 class ExpensesRecord(db.Model):
     __tablename__ = 'expenses_record'
+    __table_args__ = (
+        db.Index('ix_owner_receiver', 'owner_id', 'receiver_id'),
+    )
+
     record_id = db.Column(db.Integer, primary_key=True)
     status = db.Column(
         ENUM('buy_candy', 'transfer_candy', 'spend_candy', 'exchange_money'),
@@ -94,9 +123,28 @@ class ExpensesRecord(db.Model):
     owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
 
+    def __init__(self, **kwargs):
+        super(ExpensesRecord, self).__init__(**kwargs)
+
+    def __repr__(self):
+        return '<ExpensesRecord %r>' % self.record_id
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
 
 class Chatroom(db.Model):
     __tablename__ = 'chatroom'
+    __table_args__ = (
+        db.UniqueConstraint(
+            'owner_id',
+            'receiver_id',
+            name='uix_owner_receiver'
+        ),
+        db.Index('ix_owner_receiver', 'owner_id', 'receiver_id'),
+    )
+
     chatroom_id = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.user_id'))
@@ -107,12 +155,36 @@ class Chatroom(db.Model):
         backref=db.backref('chatroom', lazy='joined')
     )
 
+    def __init__(self, **kwargs):
+        super(Chatroom, self).__init__(**kwargs)
+
+    def __repr__(self):
+        return '<Chatroom %r>' % self.chatroom_id
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
+
 
 class Message(db.Model):
     __tablename__ = 'message'
+    __table_args__ = {
+        "useexisting": True
+    }
+
     message_id = db.Column(db.Integer, primary_key=True)
     message_type = db.Column(
         ENUM('video', 'img', 'link', 'text'),
         nullable=False
     )
     chatroom_id = db.Column(db.Integer, db.ForeignKey('chatroom.chatroom_id'))
+
+    def __init__(self, **kwargs):
+        super(Message, self).__init__(**kwargs)
+
+    def __repr__(self):
+        return '<Message %r>' % self.message_id
+
+    def save(self):
+        db.session.add(self)
+        db.session.commit()
